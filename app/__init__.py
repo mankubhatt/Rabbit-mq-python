@@ -1,12 +1,16 @@
 from flask import Flask
 from flask_jwt_extended import JWTManager
-from flask_limiter import Limiter, util
 from config import config
+from .limiter import limiter
 from .logger_config import create_logger  # make sure to import your function
 from datetime import timedelta
+from .auth_views import auth_views
+from .event_views import event_views
+from .index_views import index_views
+from .services.rabbitmq_producer import init_app as rabbitmq_producer_init_app
+from .services.rabbitmq_consumer import init_app as rabbitmq_consumer_init_app
 
 
-limiter = Limiter(key_func=util.get_remote_address)
 jwt = JWTManager()
 
 
@@ -24,10 +28,11 @@ def create_app(config_name):
     # Initialize logger
     app.logger = create_logger(app)
 
-    from .views import views as views_blueprint
-    app.register_blueprint(views_blueprint)
+    app.register_blueprint(auth_views)
+    app.register_blueprint(event_views)
+    app.register_blueprint(index_views)
 
-    from rabbitmq import init_app as rabbitmq_init_app
-    rabbitmq_init_app(app)
+    rabbitmq_producer_init_app(app)
+    rabbitmq_consumer_init_app(app)
 
     return app
