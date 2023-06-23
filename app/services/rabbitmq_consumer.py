@@ -14,33 +14,50 @@ def init_app(flask_app):
     ASP_API_URL = flask_app.config['ASP_API_URL']
 
 
-def callback(ch, method, properties, body, app):  # added app as an argument
+def callback(ch, method, properties, body, app):
     event = json.loads(body)
     event_type = event.get('type')
     event_data = event.get('data')
 
     app.logger.info(f"Received event type {event_type} with data {event_data}")
 
-    if event_type == 'Example Event':
+    if event_type == 'http':
         try:
-            time.sleep(15)
-            app.logger.info(f"Successfully called ASP.NET API with data: {event_data}")
-            ch.basic_ack(delivery_tag=method.delivery_tag)  # send ACK
+            http_methods = {
+                'get': requests.get,
+                'post': requests.post,
+                'put': requests.put,
+                'delete': requests.delete,
+            }
+
+            method_func = http_methods.get(event_data["method"])
+
+            if not method_func:
+                app.logger.error(f"Wrong http methods")
+                ch.basic_ack(delivery_tag=method.delivery_tag)
+                return
+
+            if method_func in {requests.get, requests.delete}:
+                resp = method_func(event_data['url'], params=event_data.get('params'), headers=event_data['headers'])
+            else:
+                resp = method_func(event_data['url'], data=event_data.get('body'), headers=event_data['headers'])
+
+            if resp and str(resp.status_code).startswith("2"):
+                app.logger.info(f"Successfully called ASP.NET API with data: {event_data}")
+                ch.basic_ack(delivery_tag=method.delivery_tag)  # send ACK
+
+                # send response back to the asp.net server
+
+            elif resp and str(resp.status_code).startswith("5"):
+                app.logger.error(f"Error : {event_data}")
+                ch.basic_nack(delivery_tag=method.delivery_tag)  # send ACK
 
         except requests.exceptions.HTTPError as err:
             app.logger.error(f"Failed to call ASP.NET API. Error: {err}")
-            ch.basic_nack(delivery_tag=method.delivery_tag)  # send NACK, message will be requeued
-
-    elif event_type == 'Mayank Event':
-        try:
-            time.sleep(5)
-            app.logger.info(f"Successfully called ASP.NET API with data: {event_type}")
-            ch.basic_ack(delivery_tag=method.delivery_tag)  # send ACK
-
-        except requests.exceptions.HTTPError as err:
-            app.logger.error(f"Failed to call ASP.NET API. Error: {err}")
-            ch.basic_nack(delivery_tag=method.delivery_tag)  # send NACK, message will be requeued
-
+            ch.basic_nack(delivery_tag=method.delivery_tag)
+        except Exception as err:
+            app.logger.error(f"Some Other Error: {err}")
+            ch.basic_ack(delivery_tag=method.delivery_tag)
     else:
         app.logger.warning(f"Unknown event type received: {event_type}")
         ch.basic_ack(delivery_tag=method.delivery_tag)  # ACK unknown event types to remove them from queue

@@ -9,7 +9,7 @@ event_views = Blueprint('event', __name__)
 
 class EventSchema(Schema):
     event_type = fields.Str(required=True)
-    event_data = fields.Str(required=True)
+    event_data = fields.Dict(required=True)
     priority = fields.Int(required=False)
 
 
@@ -21,7 +21,7 @@ event_schema = EventSchema()
 @jwt_required()
 def publish_event():
     try:
-        data = event_schema.loads(request.data)
+        data = event_schema.load(request.get_json())
         priority = data.get('priority', 0)  # default priority to 0 if not specified
         publish_message(data['event_type'], data['event_data'], priority, app)  # pass app and priority
         app.logger.info(f'Published message: {data}')  # Use Flask app logger
