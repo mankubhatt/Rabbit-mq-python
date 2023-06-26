@@ -22,6 +22,7 @@ def callback(ch, method, properties, body, app):
     app.logger.info(f"Received event type {event_type} with data {event_data}")
 
     if event_type == 'http':
+        time.sleep(10)
         try:
             http_methods = {
                 'get': requests.get,
@@ -46,7 +47,22 @@ def callback(ch, method, properties, body, app):
                 app.logger.info(f"Successfully called ASP.NET API with data: {event_data}")
                 ch.basic_ack(delivery_tag=method.delivery_tag)  # send ACK
 
+                time.sleep(10)
+
                 # send response back to the asp.net server
+                # try to send as JSON if possible
+                try:
+                    response_return = requests.post("https://httpbin.org/post", json=resp.json())
+                    response_return.raise_for_status()
+                    app.logger.info(f"Successfully sent as JSON.")
+                except (ValueError, requests.exceptions.HTTPError):
+                    # if it fails, send as raw content
+                    try:
+                        response_return = requests.post("https://httpbin.org/post", data=resp.content)
+                        response_return.raise_for_status()
+                        app.logger.info(f"Successfully sent as raw content.")
+                    except requests.exceptions.HTTPError as err:
+                        app.logger.error(f"Failed to forward the response. Error: {err}")
 
             elif resp and str(resp.status_code).startswith("5"):
                 app.logger.error(f"Error : {event_data}")

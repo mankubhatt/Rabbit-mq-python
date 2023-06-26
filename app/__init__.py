@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_jwt_extended import JWTManager
+from flasgger import Swagger
 from config import config
 from .limiter import limiter
 from .logger_config import create_logger  # make sure to import your function
@@ -35,4 +36,5 @@ def create_app(config_name):
     rabbitmq_producer_init_app(app)
     rabbitmq_consumer_init_app(app)
 
+    Swagger(app)
     return app

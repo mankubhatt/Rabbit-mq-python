@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app as app
 from flask_jwt_extended import jwt_required
+from flasgger import swag_from
 from marshmallow import Schema, fields, ValidationError
 from . import limiter
 from .services.rabbitmq_producer import publish_message
@@ -19,6 +20,7 @@ event_schema = EventSchema()
 @event_views.route('/publish', methods=['POST'])
 @limiter.limit("100/minute")
 @jwt_required()
+@swag_from('yaml/publish.yml')
 def publish_event():
     try:
         data = event_schema.load(request.get_json())

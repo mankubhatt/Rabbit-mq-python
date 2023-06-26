@@ -1,0 +1,14 @@
+tags:
+- name: Health Check
+  description: Endpoint to check the health of the application
+parameters: []
+responses:
+  200:
+    description: Health check successful
+    schema:
+      type: object
+      properties:
+        status:
+          type: string
+          description: The status of the application
+          example: success

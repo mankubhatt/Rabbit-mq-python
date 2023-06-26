@@ -25,7 +25,6 @@ def publish_message(event_type, event_data, priority=0, app=None):  # added prio
         'data': event_data
     })
 
-    print(priority, "hello")
     properties = pika.BasicProperties(
         delivery_mode=2,  # make message persistent
         priority=priority  # set message priority

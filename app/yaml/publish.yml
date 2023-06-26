@@ -1,0 +1,70 @@
+tags:
+- name: Events
+  description: Endpoint to publish an event
+parameters:
+- in: body
+  name: body
+  required: true
+  schema:
+    type: object
+    properties:
+      event_type:
+        type: string
+        description: The type of the event
+        example: "http"
+      event_data:
+        type: object
+        description: The data of the event
+        properties:
+          method:
+            type: string
+            description: The HTTP method
+            example: "get"
+          headers:
+            type: object
+            description: The HTTP headers
+            properties:
+              User-Agent:
+                type: string
+                example: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36"
+          url:
+            type: string
+            description: The URL
+            example: "https://www.google.com/"
+      priority:
+        type: integer
+        description: The priority of the event
+        example: 0
+- in: header
+  name: Authorization
+  type: string
+  required: true
+  description: Bearer JWT token for authentication
+responses:
+  200:
+    description: Event published successfully
+    schema:
+      type: object
+      properties:
+        status:
+          type: string
+          description: The status of the request
+          example: "success"
+  400:
+    description: Invalid request body
+    schema:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Invalid request body"
+  500:
+    description: An unexpected error occurred
+    schema:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "An unexpected error occurred"

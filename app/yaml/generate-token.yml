@@ -1,0 +1,32 @@
+tags:
+- name: Authentication
+  description: Endpoint to generate a new authentication token
+parameters:
+- in: body
+  name: body
+  required: true
+  schema:
+    type: object
+    properties:
+      api_key:
+        type: string
+        description: The API key for the application
+        example: "123456789abcdef"
+responses:
+  200:
+    description: Token generated successfully
+    schema:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: The newly generated access token
+  401:
+    description: Invalid API key
+    schema:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Error message
+          example: "Invalid API key"
